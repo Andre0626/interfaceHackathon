@@ -29,7 +29,7 @@ export function CheckBox({ text, checked, onCheckPressed }: CheckBoxProps): JSX.
           borderWidth={1.5}
           height={iconSizes.icon20}
           justifyContent="center"
-          mt="$spacing4"
+          mt="$spacing1"
           p="$spacing2"
           width={iconSizes.icon20}>
           {checked ? (

@@ -1,26 +1,16 @@
 import { FeePoolSelectAction, LiquidityEventName } from '@uniswap/analytics-events'
 import { Currency } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
-import { ButtonGray } from 'components/Button'
 import Card from 'components/Card'
-import { AutoColumn } from 'components/Column'
-import { RowBetween } from 'components/Row'
 import { useAccount } from 'hooks/useAccount'
 import { useFeeTierDistribution } from 'hooks/useFeeTierDistribution'
 import { PoolState, usePools } from 'hooks/usePools'
 import usePrevious from 'hooks/usePrevious'
-import { Trans } from 'i18n'
-import { DynamicSection } from 'pages/AddLiquidity/styled'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Box } from 'rebass'
 import styled, { keyframes } from 'styled-components'
-import { ThemedText } from 'theme/components'
 import { sendAnalyticsEvent } from 'uniswap/src/features/telemetry/send'
 import { useTrace } from 'utilities/src/telemetry/trace/TraceContext'
 import { useFormatter } from 'utils/formatNumbers'
-import { FeeOption } from './FeeOption'
-import { FeeTierPercentageBadge } from './FeeTierPercentageBadge'
-import { FEE_AMOUNT_DETAIL } from './shared'
 
 const pulse = (color: string) => keyframes`
   0% {
@@ -35,12 +25,14 @@ const pulse = (color: string) => keyframes`
     box-shadow: 0 0 0 0 ${color};
   }
 `
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const FocusedOutlineCard = styled(Card)<{ pulsing: boolean }>`
   border: 1px solid ${({ theme }) => theme.surface3};
   animation: ${({ pulsing, theme }) => pulsing && pulse(theme.accent1)} 0.6s linear;
   align-self: center;
 `
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const Select = styled.div`
   align-items: flex-start;
   display: grid;
@@ -49,7 +41,6 @@ const Select = styled.div`
 `
 
 export default function FeeSelector({
-  disabled = false,
   feeAmount,
   handleFeePoolSelect,
   currencyA,
@@ -61,10 +52,13 @@ export default function FeeSelector({
   currencyA?: Currency
   currencyB?: Currency
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { chainId } = useAccount()
   const trace = useTrace()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { formatDelta } = useFormatter()
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isLoading, isError, largestUsageFeeTier, distributions } = useFeeTierDistribution(currencyA, currencyB)
 
   // get pool data on-chain for latest states
@@ -75,6 +69,7 @@ export default function FeeSelector({
     [currencyA, currencyB, FeeAmount.HIGH],
   ])
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const poolsByFeeTier: Record<FeeAmount, PoolState> = useMemo(
     () =>
       pools.reduce(
@@ -96,13 +91,16 @@ export default function FeeSelector({
     [pools]
   )
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showOptions, setShowOptions] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [pulsing, setPulsing] = useState(false)
 
   const previousFeeAmount = usePrevious(feeAmount)
 
   const recommended = useRef(false)
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleFeePoolSelectWithEvent = useCallback(
     (fee: FeeAmount) => {
       sendAnalyticsEvent(LiquidityEventName.SELECT_LIQUIDITY_POOL_FEE_TIER, {
@@ -146,68 +144,69 @@ export default function FeeSelector({
   }, [previousFeeAmount, feeAmount])
 
   return (
-    <AutoColumn gap="16px">
-      <DynamicSection gap="md" disabled={disabled}>
-        <FocusedOutlineCard pulsing={pulsing} onAnimationEnd={() => setPulsing(false)}>
-          <RowBetween>
-            <AutoColumn id="add-liquidity-selected-fee">
-              {!feeAmount ? (
-                <>
-                  <ThemedText.DeprecatedLabel>
-                    <Trans i18nKey="fee.tier" />
-                  </ThemedText.DeprecatedLabel>
-                  <ThemedText.DeprecatedMain fontWeight={485} fontSize="12px" textAlign="left">
-                    <Trans i18nKey="fee.percentEarned" />
-                  </ThemedText.DeprecatedMain>
-                </>
-              ) : (
-                <>
-                  <ThemedText.DeprecatedLabel className="selected-fee-label">
-                    <Trans
-                      i18nKey="fee.tierExact"
-                      values={{ fee: formatDelta(parseFloat(FEE_AMOUNT_DETAIL[feeAmount].label)) }}
-                    />
-                  </ThemedText.DeprecatedLabel>
-                  {distributions && (
-                    <Box style={{ width: 'fit-content', marginTop: '8px' }} className="selected-fee-percentage">
-                      <FeeTierPercentageBadge
-                        distributions={distributions}
-                        feeAmount={feeAmount}
-                        poolState={poolsByFeeTier[feeAmount]}
-                      />
-                    </Box>
-                  )}
-                </>
-              )}
-            </AutoColumn>
-
-            <ButtonGray onClick={() => setShowOptions(!showOptions)} width="auto" padding="4px" $borderRadius="6px">
-              {showOptions ? <Trans i18nKey="common.hide.button" /> : <Trans i18nKey="common.edit.button" />}
-            </ButtonGray>
-          </RowBetween>
-        </FocusedOutlineCard>
-
-        {chainId && showOptions && (
-          <Select>
-            {[FeeAmount.LOWEST, FeeAmount.LOW, FeeAmount.MEDIUM, FeeAmount.HIGH].map((_feeAmount, i) => {
-              const { supportedChains } = FEE_AMOUNT_DETAIL[_feeAmount]
-              if (supportedChains.includes(chainId)) {
-                return (
-                  <FeeOption
-                    feeAmount={_feeAmount}
-                    active={feeAmount === _feeAmount}
-                    onClick={() => handleFeePoolSelectWithEvent(_feeAmount)}
-                    distributions={distributions}
-                    poolState={poolsByFeeTier[_feeAmount]}
-                    key={i}
-                  />
-                )
-              }
-              return null
-            })}
-          </Select>
-        )}
-      </DynamicSection>
-    </AutoColumn>
+    // <AutoColumn gap="16px">
+    //   <DynamicSection gap="md" disabled={disabled}>
+    //     <FocusedOutlineCard pulsing={pulsing} onAnimationEnd={() => setPulsing(false)}>
+    //       <RowBetween>
+    //         <AutoColumn id="add-liquidity-selected-fee">
+    //           {!feeAmount ? (
+    //             <>
+    //               <ThemedText.DeprecatedLabel>
+    //                 <Trans i18nKey="fee.tier" />
+    //               </ThemedText.DeprecatedLabel>
+    //               <ThemedText.DeprecatedMain fontWeight={485} fontSize="12px" textAlign="left">
+    //                 <Trans i18nKey="fee.percentEarned" />
+    //               </ThemedText.DeprecatedMain>
+    //             </>
+    //           ) : (
+    //             <>
+    //               <ThemedText.DeprecatedLabel className="selected-fee-label">
+    //                 <Trans
+    //                   i18nKey="fee.tierExact"
+    //                   values={{ fee: formatDelta(parseFloat(FEE_AMOUNT_DETAIL[feeAmount].label)) }}
+    //                 />
+    //               </ThemedText.DeprecatedLabel>
+    //               {distributions && (
+    //                 <Box style={{ width: 'fit-content', marginTop: '8px' }} className="selected-fee-percentage">
+    //                   <FeeTierPercentageBadge
+    //                     distributions={distributions}
+    //                     feeAmount={feeAmount}
+    //                     poolState={poolsByFeeTier[feeAmount]}
+    //                   />
+    //                 </Box>
+    //               )}
+    //             </>
+    //           )}
+    //         </AutoColumn>
+    //
+    //         <ButtonGray onClick={() => setShowOptions(!showOptions)} width="auto" padding="4px" $borderRadius="6px">
+    //           {showOptions ? <Trans i18nKey="common.hide.button" /> : <Trans i18nKey="common.edit.button" />}
+    //         </ButtonGray>
+    //       </RowBetween>
+    //     </FocusedOutlineCard>
+    //
+    //     {chainId && showOptions && (
+    //       <Select>
+    //         {[FeeAmount.LOWEST, FeeAmount.LOW, FeeAmount.MEDIUM, FeeAmount.HIGH].map((_feeAmount, i) => {
+    //           const { supportedChains } = FEE_AMOUNT_DETAIL[_feeAmount]
+    //           if (supportedChains.includes(chainId)) {
+    //             return (
+    //               <FeeOption
+    //                 feeAmount={_feeAmount}
+    //                 active={feeAmount === _feeAmount}
+    //                 onClick={() => handleFeePoolSelectWithEvent(_feeAmount)}
+    //                 distributions={distributions}
+    //                 poolState={poolsByFeeTier[_feeAmount]}
+    //                 key={i}
+    //               />
+    //             )
+    //           }
+    //           return null
+    //         })}
+    //       </Select>
+    //     )}
+    //   </DynamicSection>
+    // </AutoColumn>
+    <></>
   )
 }

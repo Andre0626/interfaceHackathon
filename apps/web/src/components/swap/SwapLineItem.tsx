@@ -67,8 +67,12 @@ export function FOTTooltipContent() {
   )
 }
 
-function SwapFeeTooltipContent({ hasFee }: { hasFee: boolean }) {
-  const message = hasFee ? <Trans i18nKey="swap.fees.experience" /> : <Trans i18nKey="swap.fees.noFee" />
+function SwapFeeTooltipContent({ hasFee, isDisconnected }: { hasFee: boolean; isDisconnected?: boolean }) {
+  //const message = hasFee ? <Trans i18nKey="swap.fees.experience" /> : <Trans i18nKey="swap.fees.noFee" />
+  const messageHasFee = isDisconnected
+    ? 'Because in the past 7 days, your trading volume has surpassed 5 ETH, you only pay a swap fee of 0.25% !'
+    : 'Because you are a trading OG, you get exclusive fee discounts! All your swapping fees are discounted by 0.25% and if you surpass the 5 ETH volume, you get even more discount!'
+  const message = hasFee ? <div>{messageHasFee}</div> : <Trans i18nKey="swap.fees.noFee" />
   return (
     <>
       {message}{' '}
@@ -95,6 +99,7 @@ function CurrencyAmountRow({ amount }: { amount: CurrencyAmount<Currency> }) {
   return <>{`${formattedAmount} ${amount.currency.symbol}`}</>
 }
 
+//eslint-disable-next-line @typescript-eslint/no-unused-vars
 function FeeRow({ trade: { swapFee, outputAmount } }: { trade: SubmittableTrade }) {
   const { formatNumber } = useFormatter()
 
@@ -110,14 +115,14 @@ function FeeRow({ trade: { swapFee, outputAmount } }: { trade: SubmittableTrade 
 }
 
 function useLineItem(props: SwapLineItemProps): LineItemData | undefined {
-  const { trade, syncing, allowedSlippage, type, priceImpact } = props
+  const { trade, syncing, allowedSlippage, type, priceImpact, isDisconnected } = props
   const { formatPercent } = useFormatter()
   const isAutoSlippage = useUserSlippageTolerance()[0] === SlippageTolerance.Auto
 
   const isUniswapX = isUniswapXTrade(trade)
+  const { formatNumber } = useFormatter()
   const isPreview = isPreviewTrade(trade)
   const chainId = trade.inputAmount.currency.chainId
-
   // Tracks the latest submittable trade's fill type, used to 'guess' whether or not to show price impact during preview
   const [lastSubmittableFillType, setLastSubmittableFillType] = useState<TradeFillType>()
   useEffect(() => {
@@ -169,17 +174,30 @@ function useLineItem(props: SwapLineItemProps): LineItemData | undefined {
         ),
       }
     case SwapLineItemType.SWAP_FEE: {
+      const feeMessage = isDisconnected ? 'Your fee (0.25%)' : 'OG exclusive fee'
+      const reductionValue = (
+        <>
+          {formatNumber({ input: 7.15, type: NumberType.FiatGasPrice })}
+          <s style={{ color: '#7d7d7d', marginLeft: '5px' }}>
+            {formatNumber({ input: 9.13, type: NumberType.FiatGasPrice })}
+          </s>
+        </>
+      )
+
       if (isPreview) {
         return { Label: () => <Trans i18nKey="common.fee.caps" />, Value: () => <Loading /> }
       }
+
+      console.log('Trade', trade)
       return {
         Label: () => (
           <>
-            <Trans i18nKey="common.fee.caps" /> {trade.swapFee && `(${formatPercent(trade.swapFee.percent)})`}
+            {/*<Trans i18nKey="common.fee.your.caps" /> {trade.swapFee && `(${formatPercent(trade.swapFee.percent)})`}*/}
+            <div>{feeMessage}</div>
           </>
         ),
-        TooltipBody: () => <SwapFeeTooltipContent hasFee={Boolean(trade.swapFee)} />,
-        Value: () => <FeeRow trade={trade} />,
+        TooltipBody: () => <SwapFeeTooltipContent isDisconnected={isDisconnected} hasFee={Boolean(trade.swapFee)} />,
+        Value: () => reductionValue,
       }
     }
     case SwapLineItemType.MAXIMUM_INPUT:
@@ -253,6 +271,7 @@ export interface SwapLineItemProps {
   type: SwapLineItemType
   animatedOpacity?: SpringValue<number>
   priceImpact?: Percent
+  isDisconnected?: boolean
 }
 
 function SwapLineItem(props: SwapLineItemProps) {

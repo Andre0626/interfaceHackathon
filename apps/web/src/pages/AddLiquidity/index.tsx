@@ -51,6 +51,7 @@ import RangeSelector from '../../components/RangeSelector'
 import PresetsButtons from '../../components/RangeSelector/PresetsButtons'
 import RateToggle from '../../components/RateToggle'
 import Row, { RowBetween, RowFixed } from '../../components/Row'
+import SetupFidelityCampaign from '../../components/SetupFidelityCampaign'
 import { SwitchLocaleLink } from '../../components/SwitchLocaleLink'
 import TransactionConfirmationModal, { ConfirmationModalContent } from '../../components/TransactionConfirmationModal'
 import { ZERO_PERCENT } from '../../constants/misc'
@@ -118,7 +119,7 @@ function AddLiquidity() {
   const theme = useTheme()
   const trace = useTrace()
 
-  const accountDrawer = useAccountDrawer() // toggle wallet when disconnected
+  const toggleWalletDrawer = useAccountDrawer() // toggle wallet when disconnected
   const addTransaction = useTransactionAdder()
   const positionManager = useV3NFTPositionManagerContract()
 
@@ -521,7 +522,7 @@ function AddLiquidity() {
         properties={{ received_swap_quote: false }}
         element={InterfaceElementName.CONNECT_WALLET_BUTTON}
       >
-        <ButtonLight onClick={accountDrawer.open} $borderRadius="12px" padding="12px">
+        <ButtonLight onClick={toggleWalletDrawer.open} $borderRadius="12px" padding="12px">
           <Trans i18nKey="common.connectWallet.button" />
         </ButtonLight>
       </Trace>
@@ -766,6 +767,9 @@ function AddLiquidity() {
               {!hasExistingPosition && (
                 <>
                   <DynamicSection gap="md" disabled={!feeAmount || invalidPool}>
+                    <div>Setup fidelity campaign:</div>
+                    <SetupFidelityCampaign baseCurrency={baseCurrency ? baseCurrency.symbol : ''} />
+
                     <RowBetween>
                       <ThemedText.DeprecatedLabel>
                         <Trans i18nKey="migrate.setRange" />

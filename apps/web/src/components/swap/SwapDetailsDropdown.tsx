@@ -15,6 +15,7 @@ import { ThemedText } from 'theme/components'
 import Trace from 'uniswap/src/features/telemetry/Trace'
 import { useTrace } from 'utilities/src/telemetry/trace/TraceContext'
 import { useFormatter } from 'utils/formatNumbers'
+import { useAccount } from '../../hooks/useAccount'
 import GasEstimateTooltip from './GasEstimateTooltip'
 import SwapLineItem, { SwapLineItemType } from './SwapLineItem'
 import TradePrice from './TradePrice'
@@ -45,6 +46,7 @@ interface SwapDetailsProps {
   loading: boolean
   allowedSlippage: Percent
   priceImpact?: Percent
+  isDisconnected?: boolean
 }
 
 export default function SwapDetailsDropdown(props: SwapDetailsProps) {
@@ -52,6 +54,7 @@ export default function SwapDetailsDropdown(props: SwapDetailsProps) {
   const theme = useTheme()
   const [showDetails, setShowDetails] = useState(false)
   const trace = useTrace()
+  const { isDisconnected } = useAccount()
 
   return (
     <Wrapper>
@@ -90,13 +93,13 @@ export default function SwapDetailsDropdown(props: SwapDetailsProps) {
           </RowFixed>
         </StyledHeaderRow>
       </Trace>
-      <AdvancedSwapDetails {...props} open={showDetails} />
+      <AdvancedSwapDetails {...props} isDisconnected={isDisconnected} open={showDetails} />
     </Wrapper>
   )
 }
 
-function AdvancedSwapDetails(props: SwapDetailsProps & { open: boolean }) {
-  const { open, trade, allowedSlippage, syncing = false, priceImpact } = props
+function AdvancedSwapDetails(props: SwapDetailsProps & { open: boolean } & { isDisconnected: boolean }) {
+  const { open, trade, allowedSlippage, syncing = false, priceImpact, isDisconnected } = props
   const format = useFormatter()
 
   if (!trade) {
@@ -112,7 +115,7 @@ function AdvancedSwapDetails(props: SwapDetailsProps & { open: boolean }) {
         <SwapLineItem {...lineItemProps} type={SwapLineItemType.MAX_SLIPPAGE} />
         <SwapLineItem {...lineItemProps} type={SwapLineItemType.INPUT_TOKEN_FEE_ON_TRANSFER} />
         <SwapLineItem {...lineItemProps} type={SwapLineItemType.OUTPUT_TOKEN_FEE_ON_TRANSFER} />
-        <SwapLineItem {...lineItemProps} type={SwapLineItemType.SWAP_FEE} />
+        <SwapLineItem {...lineItemProps} isDisconnected={isDisconnected} type={SwapLineItemType.SWAP_FEE} />
         <SwapLineItem {...lineItemProps} type={SwapLineItemType.NETWORK_COST} />
         <SwapLineItem {...lineItemProps} type={SwapLineItemType.ROUTING_INFO} />
       </SwapDetailsWrapper>
